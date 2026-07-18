@@ -23,6 +23,12 @@ namespace {
     };
 
     struct _Icu_functions_table {
+        _STD atomic<decltype(&::ures_openDirect)> _Pfn_ures_openDirect{nullptr};
+        _STD atomic<decltype(&::ures_close)> _Pfn_ures_close{nullptr};
+        _STD atomic<decltype(&::ures_getByKey)> _Pfn_ures_getByKey{nullptr};
+        _STD atomic<decltype(&::ures_getIntVector)> _Pfn_ures_getIntVector{nullptr};
+        _STD atomic<decltype(&::ures_getBinary)> _Pfn_ures_getBinary{nullptr};
+
         _STD atomic<decltype(&::ucal_close)> _Pfn_ucal_close{nullptr};
         _STD atomic<decltype(&::ucal_get)> _Pfn_ucal_get{nullptr};
         _STD atomic<decltype(&::ucal_getCanonicalTimeZoneID)> _Pfn_ucal_getCanonicalTimeZoneID{nullptr};
@@ -84,6 +90,12 @@ namespace {
             _Load_address(_Icu_module, _Icu_functions._Pfn_uenum_close, "uenum_close", _Last_error);
             _Load_address(_Icu_module, _Icu_functions._Pfn_uenum_count, "uenum_count", _Last_error);
             _Load_address(_Icu_module, _Icu_functions._Pfn_uenum_unext, "uenum_unext", _Last_error);
+
+            _Load_address(_Icu_module, _Icu_functions._Pfn_ures_openDirect, "ures_openDirect", _Last_error);
+            _Load_address(_Icu_module, _Icu_functions._Pfn_ures_close, "ures_close", _Last_error);
+            _Load_address(_Icu_module, _Icu_functions._Pfn_ures_getByKey, "ures_getByKey", _Last_error);
+            _Load_address(_Icu_module, _Icu_functions._Pfn_ures_getIntVector, "ures_getIntVector", _Last_error);
+            _Load_address(_Icu_module, _Icu_functions._Pfn_ures_getBinary, "ures_getBinary", _Last_error);
             if (_Last_error == ERROR_SUCCESS) {
                 _Level = _Icu_api_level::_Has_icu_addresses;
             } else {
@@ -103,6 +115,35 @@ namespace {
         }
 
         return _Level;
+    }
+
+    [[nodiscard]] UResourceBundle* __icu_ures_openDirect(
+        const char* package, const char* locale, UErrorCode* status) noexcept {
+        const auto _Fun = _Icu_functions._Pfn_ures_openDirect.load(_STD memory_order_relaxed);
+        return _Fun(package, locale, status);
+    }
+
+    void __icu_ures_close(UResourceBundle* resourceBundle) noexcept {
+        const auto _Fun = _Icu_functions._Pfn_ures_close.load(_STD memory_order_relaxed);
+        _Fun(resourceBundle);
+    }
+
+    [[nodiscard]] UResourceBundle* __icu_ures_getByKey(
+        const UResourceBundle* resourceBundle, const char* key, UResourceBundle* fillIn, UErrorCode* status) noexcept {
+        const auto _Fun = _Icu_functions._Pfn_ures_getByKey.load(_STD memory_order_relaxed);
+        return _Fun(resourceBundle, key, fillIn, status);
+    }
+
+    [[nodiscard]] const int32_t* __icu_ures_getIntVector(
+        const UResourceBundle* resourceBundle, int32_t* len, UErrorCode* status) noexcept {
+        const auto _Fun = _Icu_functions._Pfn_ures_getIntVector.load(_STD memory_order_relaxed);
+        return _Fun(resourceBundle, len, status);
+    }
+
+    [[nodiscard]] const uint8_t* __icu_ures_getBinary(
+        const UResourceBundle* resourceBundle, int32_t* len, UErrorCode* status) noexcept {
+        const auto _Fun = _Icu_functions._Pfn_ures_getBinary.load(_STD memory_order_relaxed);
+        return _Fun(resourceBundle, len, status);
     }
 
     void __icu_ucal_close(UCalendar* cal) noexcept {
@@ -185,6 +226,12 @@ namespace {
     struct _UCalendar_deleter {
         void operator()(UCalendar* _Cal) const noexcept {
             __icu_ucal_close(_Cal);
+        }
+    };
+
+    struct _UResourceBundle_deleter {
+        void operator()(UResourceBundle* _Resource_bundle) const noexcept {
+            __icu_ures_close(_Resource_bundle);
         }
     };
 
